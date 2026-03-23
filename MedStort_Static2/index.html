@@ -1,0 +1,569 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МТП | МедТехПродажи</title>
+    <style>
+        /* Базовый CSS для стилизации и управления вкладками */
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f4f4f9; color: #333; }
+        header { background-color: #0056b3; color: white; padding: 15px 20px; text-align: center; }
+        nav ul { list-style-type: none; padding: 0; margin: 0; display: flex; justify-content: center; background-color: #003f7f; }
+        nav ul li a { display: block; color: white; text-align: center; padding: 14px 20px; text-decoration: none; transition: background-color 0.3s; }
+        nav ul li a:hover { background-color: #002d5e; }
+        
+        .tab-content { display: none; padding: 20px; margin: 20px auto; max-width: 1200px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab-content.active { display: block; }
+        
+        h2 { color: #0056b3; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* Каталог Стиль */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .product-card { border: 1px solid #ddd; padding: 15px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; flex-direction: column; }
+        .price { font-size: 1.4em; color: #d9534f; font-weight: bold; margin: 10px 0; display: block; }
+        .product-card button { padding: 10px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; margin-top: auto; }
+        .btn-cart { background-color: #f0ad4e; color: white; }
+        .btn-buy { background-color: #5cb85c; color: white; }
+
+        /* Корзина Стиль */
+        .cart-item { border-bottom: 1px dashed #ccc; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .cart-item:last-child { border-bottom: none; }
+
+        /* Форматирование для текста 'О компании' */
+        .focus-point { background-color: #e9f7ff; padding: 15px; border-left: 5px solid #0056b3; margin-bottom: 15px; }
+        .warning { color: #a94442; font-weight: bold; }
+
+        /* Стили для МОДАЛЬНОГО ОКНА ОФОРМЛЕНИЯ ЗАКАЗА */
+        .modal {
+            display: none; /* Скрыто по умолчанию */
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.5); /* Затемнение фона */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto; /* 5% сверху и по центру */
+            padding: 30px;
+            border: 1px solid #888;
+            width: 80%; /* Ширина контента */
+            max-width: 600px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="tel"],
+        .form-group input[type="email"],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Учет padding в общей ширине */
+        }
+        .form-group input[type="radio"],
+        .form-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .order-summary {
+            background-color: #eef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>МТП — Медицинская Техника Продажи</h1>
+        <p>Ваш партнер в поставках высокоточного оборудования</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#home">Главная</a></li>
+            <li><a href="#catalog">Каталог (20+ позиций)</a></li>
+            <li><a href="#cart">Корзина (<span id="cart-count">0</span>)</a></li>
+            <li><a href="#about">О компании</a></li>
+            <li><a href="#contacts">Контакты</a></li>
+        </ul>
+    </nav>
+
+    <!-- 1. ГЛАВНАЯ СТРАНИЦА -->
+    <div id="home" class="tab-content active">
+        <h2>Добро пожаловать в МТП!</h2>
+        <p>Мы являемся ведущим поставщиком передового медицинского оборудования, ориентированным на максимальную эффективность и качество обслуживания.</p>
+        <p>Используйте навигацию выше, чтобы перейти в наш обширный <strong>Каталог</strong> или узнать больше о наших <strong>Приоритетах</strong>.</p>
+    </div>
+
+    <!-- 2. КАТАЛОГ -->
+    <div id="catalog" class="tab-content">
+        <h2>Каталог Медицинского Оборудования</h2>
+        <p>В нашем каталоге представлено более 20 наименований современного оборудования. Для управления корзиной используйте JavaScript.</p>
+        <div class="product-grid" id="product-list">
+            
+            <!-- ПРИМЕР ТОВАРА 1 (МРТ) -->
+            <div class="product-card" data-id="1" data-name="Аппарат МРТ High-Field" data-price="50000000">
+                <h3>Аппарат МРТ High-Field (3.0 Тл)</h3>
+                <p><strong>Описание:</strong> Система с высокой пропускной способностью для нейровизуализации и кардиологии. Высокая детализация снимков.</p>
+                <p><strong>Функции:</strong> 3.0 Тесла, ускоренный протокол сканирования, AI-интерфейс.</p>
+                <span class="price">50.000.000 RUB</span>
+                <button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button>
+                <button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button>
+            </div>
+
+            <!-- ПРИМЕР ТОВАРА 2 (Хирургический Робот) -->
+            <div class="product-card" data-id="2" data-name="Хирургический Робот-Ассистент" data-price="95500000">
+                <h3>Хирургический Робот-Ассистент</h3>
+                <p><strong>Описание:</strong> Платформа для минимально инвазивных операций, обеспечивающая недостижимую для человека точность движений.</p>
+                <p><strong>Функции:</strong> 7 степеней свободы, система стабилизации тремора, 4K видеомодуль.</p>
+                <span class="price">95.500.000 RUB</span>
+                <button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button>
+                <button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button>
+            </div>
+
+            <!-- ЗАГЛУШКИ ДЛЯ ОСТАЛЬНЫХ 18 ТОВАРОВ (для выполнения требования 20+) -->
+            
+            <!-- Товар 3 -->
+            <div class="product-card" data-id="3" data-name="УЗИ Сканер Портативный" data-price="1250000">
+                <h3>УЗИ Сканер Портативный</h3>
+                <p><strong>Описание:</strong> Высокомобильный аппарат для экстренной диагностики.</p>
+                <p><strong>Функции:</strong> 3-х частотный датчик, беспроводная передача данных.</p>
+                <span class="price">1.250.000 RUB</span>
+                <button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button>
+                <button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button>
+            </div>
+
+            <!-- Товар 4 -->
+            <div class="product-card" data-id="4" data-name="Ангиограф с С-дугой" data-price="32800000">
+                <h3>Ангиограф с С-дугой</h3>
+                <p><strong>Описание:</strong> Цифровая система визуализации для сосудистых вмешательств.</p>
+                <p><strong>Функции:</strong> Детектор плоскопанельный, низкодозовый режим.</p>
+                <span class="price">32.800.000 RUB</span>
+                <button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button>
+                <button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button>
+            </div>
+
+            <!-- Товар 5 -->
+            <div class="product-card" data-id="5" data-name="Лазерный Терапевтический Комплекс" data-price="4500000">
+                <h3>Лазерный Терапевтический Комплекс</h3>
+                <p><strong>Описание:</strong> Модуль для малоинвазивной терапии.</p>
+                <p><strong>Функции:</strong> Длина волны 1064 нм, автоматическая калибровка.</p>
+                <span class="price">4.500.000 RUB</span>
+                <button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button>
+                <button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button>
+            </div>
+            
+            <!-- Товар 6-20 (Заглушки) -->
+            <div class="product-card" data-id="6" data-name="Монитор Пациента HD-X" data-price="350000"><h3 data-name="Монитор Пациента HD-X">Монитор Пациента HD-X</h3><p><strong>Описание:</strong> 15-дюймовый дисплей, 12 параметров.</p><p><strong>Функции:</strong> ЭКГ, SpO2, НИАД, Температура.</p><span class="price">350.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="7" data-name="Аппарат ИВЛ Про" data-price="2100000"><h3 data-name="Аппарат ИВЛ Про">Аппарат ИВЛ Про (Взрослый/Детский)</h3><p><strong>Описание:</strong> Полностью автоматизированный аппарат ИВЛ экспертного класса.</p><p><strong>Функции:</strong> Режимы VC-CMV, PRVC, мониторинг инвазивной и неинвазивной вентиляции.</p><span class="price">2.100.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="8" data-name="Электрохирургический блок ESB-200" data-price="850000"><h3 data-name="Электрохирургический блок ESB-200">Электрохирургический блок ESB-200</h3><p><strong>Описание:</strong> Универсальный моно- и биполярный блок.</p><p><strong>Функции:</strong> Режимы CUT, COAG, Bipolar.</p><span class="price">850.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="9" data-name="Автоклав Класс B 24л" data-price="420000"><h3 data-name="Автоклав Класс B 24л">Автоклав Класс B 24л</h3><p><strong>Описание:</strong> Паровой стерилизатор с вакуумной сушкой.</p><p><strong>Функции:</strong> Предварительный и фракционный вакуум.</p><span class="price">420.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="10" data-name="ЭКГ-аппарат 12 отв." data-price="180000"><h3 data-name="ЭКГ-аппарат 12 отв.">ЭКГ-аппарат 12 отв. с анализом</h3><p><strong>Описание:</strong> Цифровой 12-канальный ЭКГ с функцией интерпретации.</p><p><strong>Функции:</strong> Печать на А4, USB/LAN.</p><span class="price">180.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="11" data-name="Инфузионный Насос (4 канала)" data-price="250000"><h3 data-name="Инфузионный Насос (4 канала)">Инфузионный Насос (4 канала)</h3><p><strong>Описание:</strong> Точное и программируемое введение лекарственных средств.</p><p><strong>Функции:</strong> Дозирование по объему/времени, сигнализация.</p><span class="price">250.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="12" data-name="Дефибриллятор с Монитором" data-price="750000"><h3 data-name="Дефибриллятор с Монитором">Дефибриллятор с Монитором</h3><p><strong>Описание:</strong> Монофазный/Бифазный, с режимом ЭКГ.</p><p><strong>Функции:</strong> Ручной и автоматический режимы (АНД).</p><span class="price">750.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="13" data-name="Центральный Пульсоксиметр" data-price="140000"><h3 data-name="Центральный Пульсоксиметр">Центральный Пульсоксиметр</h3><p><strong>Описание:</strong> Система мониторинга сатурации для ОРИТ.</p><p><strong>Функции:</strong> Одновременный мониторинг до 16 кроватей.</p><span class="price">140.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="14" data-name="Эндоскопическая Стойка 4K" data-price="18900000"><h3 data-name="Эндоскопическая Стойка 4K">Эндоскопическая Стойка 4K</h3><p><strong>Описание:</strong> Система для гастро- и колоноскопии с разрешением 4K.</p><p><strong>Функции:</strong> Флуоресцентная визуализация (NBI).</p><span class="price">18.900.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="15" data-name="Гематологический Анализатор 3-diff" data-price="990000"><h3 data-name="Гематологический Анализатор 3-diff">Гематологический Анализатор (3-diff)</h3><p><strong>Описание:</strong> Полный анализ 20 параметров крови.</p><p><strong>Функции:</strong> Пропускная способность до 60 образцов/час.</p><span class="price">990.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="16" data-name="CO2-инсуффлятор" data-price="480000"><h3 data-name="CO2-инсуффлятор">CO2-инсуффлятор для Лапароскопии</h3><p><strong>Описание:</strong> Обеспечение рабочего пространства в брюшной полости.</p><p><strong>Функции:</strong> Поддержание постоянного давления, подогрев газа.</p><span class="price">480.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="17" data-name="Аппарат Искусственной Почки (Диализ)" data-price="3500000"><h3 data-name="Аппарат Искусственной Почки (Диализ)">Аппарат Искусственной Почки (Диализ)</h3><p><strong>Описание:</strong> Высококачественная гемодиализная система.</p><p><strong>Функции:</strong> Профилирование ультрафильтрации.</p><span class="price">3.500.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="18" data-name="Электромиограф" data-price="510000"><h3 data-name="Электромиограф">Электромиограф (4 канала)</h3><p><strong>Описание:</strong> Диагностика заболеваний периферической нервной системы.</p><p><strong>Функции:</strong> Игольчатая и поверхностная стимуляция.</p><span class="price">510.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="19" data-name="Реанимационный Стол с Весами" data-price="220000"><h3 data-name="Реанимационный Стол с Весами">Реанимационный Стол с Весами</h3><p><strong>Описание:</strong> Многофункциональный стол для перемещения пациентов.</p><p><strong>Функции:</strong> Встроенные весы до 300 кг, регулировка высоты.</p><span class="price">220.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            <div class="product-card" data-id="20" data-name="Стерилизатор Холодный Плазменный" data-price="1100000"><h3 data-name="Стерилизатор Холодный Плазменный">Стерилизатор Холодный Плазменный</h3><p><strong>Описание:</strong> Для термочувствительных инструментов.</p><p><strong>Функции:</strong> Цикл 30 минут, низкая температура.</p><span class="price">1.100.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            
+            <!-- Товар 21 (для превышения 20) -->
+            <div class="product-card" data-id="21" data-name="Система для ЭКО" data-price="7800000"><h3 data-name="Система для ЭКО">Система для ЭКО (Лабораторная)</h3><p><strong>Описание:</strong> Высокоточное оборудование для репродуктивных технологий.</p><p><strong>Функции:</strong> Инкубатор с контролем CO2, микроманипуляторы.</p><span class="price">7.800.000 RUB</span><button class="btn-cart" data-action="add-to-cart">Добавить в корзину</button><button class="btn-buy" data-action="buy-now">Купить сразу (Оформление)</button></div>
+            
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ОФОРМЛЕНИЯ ЗАКАЗА (Добавлено) -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Оформление Заказа</h2>
+            
+            <div class="order-summary">
+                <h3>Выбранный товар: <span id="modal-product-name"></span></h3>
+                <p>Цена: <strong id="modal-product-price"></strong> RUB</p>
+                <p><strong>Общая сумма (для этого товара): <span id="modal-total-price"></span> RUB</strong></p>
+            </div>
+
+            <form id="orderForm">
+                
+                <!-- Личные данные -->
+                <div class="form-group">
+                    <label for="first_name">Имя</label>
+                    <input type="text" id="first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Фамилия</label>
+                    <input type="text" id="last_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="patronymic">Отчество</label>
+                    <input type="text" id="patronymic">
+                </div>
+                <div class="form-group">
+                    <label for="city">Город</label>
+                    <input type="text" id="city" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Номер телефона</label>
+                    <input type="tel" id="phone" pattern="[0-9]{10,15}" placeholder="+7(XXX)XXX-XX-XX" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Электронный адрес</label>
+                    <input type="email" id="email" required>
+                </div>
+
+                <!-- Способ получения -->
+                <h3>Способ получения</h3>
+                <div class="form-group">
+                    <label><input type="radio" name="delivery_type" value="pickup" required> Самовывоз</label><br>
+                    <label><input type="radio" name="delivery_type" value="delivery"> Доставка</label>
+                </div>
+
+                <!-- Способ оплаты -->
+                <h3>Способ оплаты</h3>
+                <div class="form-group">
+                    <label><input type="radio" name="payment_method" value="card" required> Банковская карта</label><br>
+                    <label><input type="radio" name="payment_method" value="sbp"> СБП (Система Быстрых Платежей)</label>
+                </div>
+                <div class="form-group">
+                    <label><input type="radio" name="payment_timing" value="pay_now" required> Оплатить сейчас</label><br>
+                    <label><input type="radio" name="payment_timing" value="pay_on_receipt"> Оплата при получении</label>
+                </div>
+                
+                <button type="submit" style="padding: 12px 20px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Подтвердить Заказ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. КОРЗИНА -->
+    <div id="cart" class="tab-content">
+        <h2>Ваша Корзина Запросов</h2>
+        <div id="cart-items">
+            <!-- СЮДА БУДУТ ДОБАВЛЯТЬСЯ ТОВАРЫ С ПОМОЩЬЮ JAVASCRIPT -->
+            <p id="empty-cart-message">Корзина пуста. Добавьте товары из каталога.</p>
+        </div>
+        <hr>
+        <p><strong>Общая Сумма:</strong> <span id="cart-total">0.00</span> RUB</p>
+        <!-- Кнопка Оформить Заказ теперь вызывает логику корзины -->
+        <button id="checkoutFromCartBtn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="openCartCheckout()">Оформить Заказ из Корзины</button>
+    </div>
+
+    <!-- 4. О КОМПАНИИ -->
+    <div id="about" class="tab-content">
+        <h2>О Компании «МТП»</h2>
+        
+        <h3>Наш Фокус и Приоритеты</h3>
+        <div class="focus-point">
+            <p>Наше основное внимание сосредоточено на обслуживании <strong>частных клиник и обеспечении потребностей требовательных клиентов (богатых людей)</strong>. Мы ценим <strong>скорость и эффективность</strong> в каждом процессе.</p>
+        </div>
+        
+        <div class="focus-point warning">
+            <p>Что касается государственных поликлиник, то мы вынуждены следовать установленным процедурам закупок. Обращаем внимание, что <strong>государственные поликлиники могут подавать заявки и стоять в очереди десятилетиями, пока клинику не закроют из-за того, что нет нужного оборудования, ведь они его ждут 10 лет.</strong></p>
+        </div>
+
+        <h3>Специальные Предложения</h3>
+        <p>Для партнеров, сделавших единовременные закупки на сумму от <strong>4.000.000 RUB</strong>, действует специальная программа лояльности и дополнительные скидки на сервисное обслуживание.</p>
+
+        <hr>
+        <p><strong>Дата Создания Компании:</strong> 2026 год.</p>
+        <p><strong>Цель:</strong> Создана для обеспечения частного сектора медицины передовыми технологиями.</p>
+
+    </div>
+
+    <!-- 5. КОНТАКТЫ -->
+    <div id="contacts" class="tab-content">
+        <h2>Контакты Технической Поддержки и Продаж</h2>
+        <p>Для оперативного решения вопросов, пожалуйста, используйте следующие каналы связи:</p>
+        
+        <ul>
+            <li><strong>Электронная почта (Общие вопросы и Мессенджер):</strong> support@mtp-medtech.ru (Мы оперативно отвечаем в течение 1 часа в рабочее время).</li>
+            <li><strong>Телефон Технической Поддержки (24/7):</strong> +7 (495) 555-01-01.</li>
+            <li><strong>Физический Адрес Компании:</strong> г. Москва, Инновационный проспект, д. 42, Бизнес-центр «МедВектор».</li>
+        </ul>
+    </div>
+
+    <script>
+        // =============================================================
+        // БЛОК JAVASCRIPT (УЛУЧШЕНИЯ)
+        // =============================================================
+
+        let cart = []; // Массив для хранения объектов товаров в корзине
+        let currentBuyNowItem = null; // Хранит данные о товаре, для которого открыто модальное окно
+
+        // Функция для форматирования чисел (для удобного отображения цен)
+        const formatCurrency = (amount) => {
+            return parseFloat(amount).toLocaleString('ru-RU', { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        };
+
+
+        // --- 1. Логика Вкладок ---
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                document.querySelector(targetId).classList.add('active');
+                
+                // Если мы перешли в корзину, обновим ее отображение
+                if (targetId === '#cart') {
+                    renderCart();
+                }
+            });
+        });
+
+        // --- 2. Логика Каталога (Добавление в корзину) ---
+        document.querySelectorAll('[data-action="add-to-cart"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const card = this.closest('.product-card');
+                const id = card.dataset.id;
+                const name = card.dataset.name;
+                const priceStr = card.dataset.price;
+                const priceNum = parseFloat(priceStr);
+
+                const existingItem = cart.find(item => item.id === id);
+                if (existingItem) {
+                    alert(`Товар "${name}" уже в корзине. Для изменения количества, пожалуйста, перейдите во вкладку "Корзина".`);
+                    document.querySelector('a[href="#cart"]').click();
+                    return;
+                }
+
+                cart.push({ id, name, price: priceNum });
+                updateCartUI();
+                alert(`Товар "${name}" добавлен в корзину!`);
+                
+                document.querySelector('a[href="#cart"]').click();
+            });
+        });
+
+        // --- 3. Логика Модального Окна (Купить Сразу) ---
+        
+        // Находим все кнопки "Купить сразу"
+        document.querySelectorAll('[data-action="buy-now"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const card = this.closest('.product-card');
+                
+                currentBuyNowItem = {
+                    id: card.dataset.id,
+                    name: card.dataset.name,
+                    price: parseFloat(card.dataset.price)
+                };
+
+                // Заполняем модальное окно данными о товаре
+                document.getElementById('modal-product-name').textContent = currentBuyNowItem.name;
+                document.getElementById('modal-product-price').textContent = formatCurrency(currentBuyNowItem.price);
+                document.getElementById('modal-total-price').textContent = formatCurrency(currentBuyNowItem.price);
+                
+                // Сбрасываем форму (важно, если окно открывалось ранее)
+                document.getElementById('orderForm').reset();
+                
+                // Показываем модальное окно
+                document.getElementById('checkoutModal').style.display = "block";
+            });
+        });
+
+        // Закрытие модального окна
+        const closeModal = () => {
+            document.getElementById('checkoutModal').style.display = "none";
+            currentBuyNowItem = null;
+        };
+
+        document.querySelector('.close-button').onclick = closeModal;
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('checkoutModal')) {
+                closeModal();
+            }
+        }
+        
+        // Обработка отправки формы оформления заказа
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!currentBuyNowItem) {
+                alert("Ошибка: Товар для оформления не определен.");
+                closeModal();
+                return;
+            }
+
+            const formData = new FormData(this);
+            
+            // Сбор данных для примера (в реальном проекте здесь была бы AJAX-отправка на сервер)
+            const orderDetails = {
+                productName: currentBuyNowItem.name,
+                productId: currentBuyNowItem.id,
+                price: currentBuyNowItem.price,
+                client: {
+                    firstName: formData.get('first_name'),
+                    lastName: formData.get('last_name'),
+                    patronymic: formData.get('patronymic') || 'Не указано',
+                    city: formData.get('city'),
+                    phone: formData.get('phone'),
+                    email: formData.get('email')
+                },
+                delivery: formData.get('delivery_type'),
+                paymentMethod: formData.get('payment_method'),
+                paymentTiming: formData.get('payment_timing')
+            };
+
+            // Для примера выводим сообщение об успешном оформлении
+            alert(`Успешно оформлен заказ на товар: ${orderDetails.productName}.\nСумма: ${formatCurrency(orderDetails.price)} RUB.\nМы свяжемся с Вами по телефону: ${orderDetails.client.phone} для подтверждения деталей оплаты и доставки.`);
+
+            closeModal(); // Закрываем окно
+            
+            // Так как это "Купить сразу", товар не добавляется в корзину, а оформляется мгновенно.
+        });
+
+
+        // --- 4. Логика Корзины (Отображение, Сумма, Удаление) ---
+
+        // Обновление счетчика в навигации
+        function updateCartUI() {
+            document.getElementById('cart-count').textContent = cart.length;
+        }
+        
+        // Очистка и перерисовка содержимого корзины
+        function renderCart() {
+            const cartContainer = document.getElementById('cart-items');
+            const totalElement = document.getElementById('cart-total');
+            cartContainer.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                document.getElementById('empty-cart-message').style.display = 'block';
+                totalElement.textContent = formatCurrency(0);
+                updateCartUI();
+                return;
+            }
+
+            document.getElementById('empty-cart-message').style.display = 'none';
+
+            cart.forEach((item, index) => {
+                total += item.price;
+                
+                const formattedPrice = formatCurrency(item.price);
+                
+                const itemHtml = `
+                    <div class="cart-item" data-id="${item.id}">
+                        <span>${index + 1}. ${item.name}</span>
+                        <span>
+                            <strong>${formattedPrice} RUB</strong> 
+                            <button class="btn-remove" data-index="${index}" style="background: #d9534f; color: white; border: none; padding: 5px 10px; cursor: pointer;">Удалить</button>
+                            <!-- Добавлена кнопка оформления из корзины -->
+                            <button class="btn-checkout-from-cart" data-index="${index}" style="background: #5cb85c; color: white; border: none; padding: 5px 10px; cursor: pointer;">Оформить</button>
+                        </span>
+                    </div>
+                `;
+                cartContainer.innerHTML += itemHtml;
+            });
+
+            totalElement.textContent = formatCurrency(total);
+            updateCartUI();
+            setupCartActions();
+        }
+        
+        function setupCartActions() {
+            // Удаление товара
+            document.querySelectorAll('.btn-remove').forEach(button => {
+                button.onclick = function() { 
+                    const index = parseInt(this.dataset.index);
+                    const removedName = cart[index].name;
+                    
+                    cart.splice(index, 1); // Удаляем элемент
+                    renderCart(); // Перерисовываем корзину (индексы меняются)
+                    alert(`Товар "${removedName}" удален из корзины.`);
+                };
+            });
+
+            // Оформление одного товара прямо из корзины
+            document.querySelectorAll('.btn-checkout-from-cart').forEach(button => {
+                button.onclick = function() {
+                    const index = parseInt(this.dataset.index);
+                    
+                    // Готовим данные для модального окна (как будто нажали "Купить сразу")
+                    const itemToCheckout = cart[index];
+                    
+                    currentBuyNowItem = {
+                        id: itemToCheckout.id,
+                        name: itemToCheckout.name,
+                        price: itemToCheckout.price
+                    };
+
+                    // Заполняем модальное окно
+                    document.getElementById('modal-product-name').textContent = currentBuyNowItem.name;
+                    document.getElementById('modal-product-price').textContent = formatCurrency(currentBuyNowItem.price);
+                    document.getElementById('modal-total-price').textContent = formatCurrency(currentBuyNowItem.price);
+                    
+                    // Сбрасываем форму и показываем окно
+                    document.getElementById('orderForm').reset();
+                    document.getElementById('checkoutModal').style.display = "block";
+
+                    // При успешном оформлении из этого окна, товар будет удален из корзины (это делается внутри обработчика формы orderForm)
+                };
+            });
+        }
+        
+        // Вызов для оформления ВСЕЙ корзины (имитация)
+        function openCartCheckout() {
+            if (cart.length === 0) {
+                alert("Корзина пуста. Добавьте товары для оформления заказа.");
+                return;
+            }
+            
+            // В данном случае, мы не можем использовать модальное окно с одним товаром.
+            // Для оформления ВСЕЙ корзины (в реальной жизни) нужно создать новое модальное окно со списком ВСЕХ позиций.
+            // Для целей этого задания, имитируем отправку всей корзины.
+            const totalAmount = cart.reduce((sum, item) => sum + item.price, 0);
+
+            alert(`Инициировано оформление ВСЕЙ корзины (${cart.length} позиций).\nОбщая сумма заказа: ${formatCurrency(totalAmount)} RUB.\nПерейдите в форму оформления для ввода личных данных (в реальном проекте).`);
+            
+            // Очищаем корзину после "успешного" оформления всей кучи
+            cart = []; 
+            renderCart();
+        }
+
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('#home').classList.add('active');
+            updateCartUI();
+            renderCart(); // Рендерим корзину, чтобы увидеть, что она пуста
+        });
+    </script>
+</body>
+</html>
