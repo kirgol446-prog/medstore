@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МТП | МедТехПродажи — Улучшенная корзина</title>
+    <style>
+        /* Базовый CSS для стилизации и управления вкладками */
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f4f4f9; color: #333; }
+        header { background-color: #0056b3; color: white; padding: 15px 20px; text-align: center; }
+        nav ul { list-style-type: none; padding: 0; margin: 0; display: flex; justify-content: center; background-color: #003f7f; flex-wrap: wrap; }
+        nav ul li a { display: block; color: white; text-align: center; padding: 14px 20px; text-decoration: none; transition: background-color 0.3s; }
+        nav ul li a:hover { background-color: #002d5e; }
+        
+        .tab-content { display: none; padding: 20px; margin: 20px auto; max-width: 1200px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab-content.active { display: block; }
+        
+        h2 { color: #0056b3; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* Каталог Стиль */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .product-card { border: 1px solid #ddd; padding: 15px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; flex-direction: column; transition: transform 0.2s; background: #fff; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .price { font-size: 1.4em; color: #d9534f; font-weight: bold; margin: 10px 0; display: block; }
+        .product-card button { padding: 10px 15px; margin-right: 8px; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; margin-top: auto; font-weight: bold; }
+        .btn-cart { background-color: #f0ad4e; color: white; }
+        .btn-cart:hover { background-color: #ec971f; }
+        .btn-buy { background-color: #5cb85c; color: white; }
+        .btn-buy:hover { background-color: #4cae4c; }
+
+        /* Корзина Стиль — улучшенный */
+        .cart-items-container { max-height: 500px; overflow-y: auto; margin-bottom: 20px; }
+        .cart-item { border-bottom: 1px solid #e0e0e0; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .cart-item-info { flex: 3; min-width: 180px; }
+        .cart-item-name { font-weight: bold; font-size: 1.05em; }
+        .cart-item-price { color: #d9534f; font-weight: bold; margin-top: 4px; font-size: 0.95em; }
+        .cart-item-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .quantity-control { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 5px 10px; border-radius: 30px; border: 1px solid #ddd; }
+        .quantity-control button { background: #e9ecef; border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: 0.2s; color: #0056b3; }
+        .quantity-control button:hover { background: #dee2e6; }
+        .quantity-control span { min-width: 30px; text-align: center; font-weight: bold; font-size: 1.1em; }
+        .btn-remove-cart { background: #dc3545; color: white; border: none; padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-size: 0.85em; }
+        .btn-remove-cart:hover { background: #c82333; }
+        .btn-checkout-single { background: #28a745; color: white; border: none; padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-size: 0.85em; }
+        .btn-checkout-single:hover { background: #218838; }
+
+        .cart-summary { background: #f8f9fc; padding: 20px; border-radius: 12px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .total-price { font-size: 1.8em; font-weight: bold; color: #0056b3; }
+        .btn-checkout-all { background: #007bff; color: white; padding: 12px 28px; border: none; border-radius: 40px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-checkout-all:hover { background: #0069d9; transform: scale(1.02); }
+        .btn-clear-cart { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 30px; cursor: pointer; margin-right: 12px; }
+        .btn-clear-cart:hover { background: #5a6268; }
+
+        /* Модальное окно (универсальное для корзины и единичной покупки) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 25px 30px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 680px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .close-button:hover { color: black; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .order-summary { background-color: #eef2ff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid #0056b3; }
+        .order-items-list { max-height: 180px; overflow-y: auto; margin: 10px 0; background: #fff; padding: 8px; border-radius: 8px; }
+        .order-item-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #ccc; font-size: 0.9em; }
+        hr { margin: 15px 0; }
+        .radio-group { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 5px; }
+        .btn-submit-order { background: #28a745; color: white; padding: 14px; border: none; border-radius: 40px; width: 100%; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn-submit-order:hover { background: #218838; }
+        .focus-point { background-color: #e9f7ff; padding: 15px; border-left: 5px solid #0056b3; margin-bottom: 15px; }
+        .warning { color: #a94442; background: #f9e6e6; border-left-color: #d9534f; }
+        .empty-cart-message { text-align: center; padding: 40px; color: #6c757d; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>МТП — Медицинская Техника Продажи</h1>
+    <p>Ваш партнер в поставках высокоточного оборудования</p>
+</header>
+
+<nav>
+    <ul>
+        <li><a href="#home">Главная</a></li>
+        <li><a href="#catalog">Каталог (20+ позиций)</a></li>
+        <li><a href="#cart">Корзина (<span id="cart-count">0</span>)</a></li>
+        <li><a href="#about">О компании</a></li>
+        <li><a href="#contacts">Контакты</a></li>
+    </ul>
+</nav>
+
+<!-- ГЛАВНАЯ -->
+<div id="home" class="tab-content active">
+    <h2>Добро пожаловать в МТП!</h2>
+    <p>Мы являемся ведущим поставщиком передового медицинского оборудования, ориентированным на максимальную эффективность и качество обслуживания.</p>
+    <p>Используйте навигацию выше, чтобы перейти в наш обширный <strong>Каталог</strong> или узнать больше о наших <strong>Приоритетах</strong>.</p>
+</div>
+
+<!-- КАТАЛОГ (20+ товаров) -->
+<div id="catalog" class="tab-content">
+    <h2>Каталог Медицинского Оборудования</h2>
+    <p>В нашем каталоге представлено более 20 наименований современного оборудования. Нажмите «Добавить в корзину» — теперь можно управлять количеством в корзине!</p>
+    <div class="product-grid" id="product-list">
+        <!-- Товары генерируются динамически через JS для удобства поддержки, но оставим часть статической разметки + дополним. 
+             Однако чтобы сохранить визуальное разнообразие, добавим динамическое заполнение, но при этом сохраним все позиции. 
+             Создадим массив товаров и отрендерим через JS (гарантия 20+). -->
+    </div>
+</div>
+
+<!-- КОРЗИНА (улучшенная) -->
+<div id="cart" class="tab-content">
+    <h2>Ваша Корзина <span style="font-size:0.8rem;">(изменение количества, удаление)</span></h2>
+    <div id="cart-items-container" class="cart-items-container">
+        <!-- динамическая отрисовка -->
+        <div id="empty-cart-message" class="empty-cart-message">🛒 Корзина пуста. Добавьте товары из каталога.</div>
+    </div>
+    <div id="cart-summary-area" style="display: none;">
+        <div class="cart-summary">
+            <div>
+                <button id="clear-cart-btn" class="btn-clear-cart">🗑 Очистить корзину</button>
+            </div>
+            <div>
+                <span class="total-price-label">Общая сумма:</span>
+                <span id="cart-total" class="total-price">0.00</span> RUB
+            </div>
+            <div>
+                <button id="checkoutFromCartBtn" class="btn-checkout-all">✅ Оформить заказ (все товары)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- О КОМПАНИИ -->
+<div id="about" class="tab-content">
+    <h2>О Компании «МТП»</h2>
+    <div class="focus-point">
+        <p>Наше основное внимание сосредоточено на обслуживании <strong>частных клиник и обеспечении потребностей требовательных клиентов (богатых людей)</strong>. Мы ценим <strong>скорость и эффективность</strong> в каждом процессе.</p>
+    </div>
+    <div class="focus-point warning">
+        <p>Что касается государственных поликлиник, то мы вынуждены следовать установленным процедурам закупок. Обращаем внимание, что <strong>государственные поликлиники могут подавать заявки и стоять в очереди десятилетиями, пока клинику не закроют из-за того, что нет нужного оборудования, ведь они его ждут 10 лет.</strong></p>
+    </div>
+    <h3>Специальные Предложения</h3>
+    <p>Для партнеров, сделавших единовременные закупки на сумму от <strong>4.000.000 RUB</strong>, действует специальная программа лояльности.</p>
+    <hr>
+    <p><strong>Дата Создания Компании:</strong> 2026 год.</p>
+</div>
+
+<!-- КОНТАКТЫ -->
+<div id="contacts" class="tab-content">
+    <h2>Контакты Технической Поддержки и Продаж</h2>
+    <ul>
+        <li><strong>Email:</strong> support@mtp-medtech.ru</li>
+        <li><strong>Телефон 24/7:</strong> +7 (495) 555-01-01</li>
+        <li><strong>Адрес:</strong> г. Москва, Инновационный проспект, д. 42</li>
+    </ul>
+</div>
+
+<!-- УНИВЕРСАЛЬНОЕ МОДАЛЬНОЕ ОКНО ОФОРМЛЕНИЯ (для корзины и единичной покупки) -->
+<div id="checkoutModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Оформление Заказа</h2>
+        <div class="order-summary" id="modal-order-summary">
+            <!-- динамическое содержимое (товары, общая сумма) -->
+        </div>
+        <form id="orderForm">
+            <div class="form-group"><label>Имя *</label><input type="text" id="first_name" required></div>
+            <div class="form-group"><label>Фамилия *</label><input type="text" id="last_name" required></div>
+            <div class="form-group"><label>Отчество</label><input type="text" id="patronymic"></div>
+            <div class="form-group"><label>Город *</label><input type="text" id="city" required></div>
+            <div class="form-group"><label>Телефон *</label><input type="tel" id="phone" placeholder="+7 (XXX) XXX-XX-XX" required></div>
+            <div class="form-group"><label>Email *</label><input type="email" id="email" required></div>
+            
+            <h3>Способ получения</h3>
+            <div class="radio-group">
+                <label><input type="radio" name="delivery_type" value="pickup" required> Самовывоз</label>
+                <label><input type="radio" name="delivery_type" value="delivery"> Доставка</label>
+            </div>
+            <h3>Способ оплаты</h3>
+            <div class="radio-group">
+                <label><input type="radio" name="payment_method" value="card" required> Банковская карта</label>
+                <label><input type="radio" name="payment_method" value="sbp"> СБП</label>
+            </div>
+            <div class="radio-group">
+                <label><input type="radio" name="payment_timing" value="pay_now" required> Оплатить сейчас</label>
+                <label><input type="radio" name="payment_timing" value="pay_on_receipt"> Оплата при получении</label>
+            </div>
+            <button type="submit" class="btn-submit-order">Подтвердить Заказ</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------------------
+    // 1. РАСШИРЕННЫЙ КАТАЛОГ (20+ товаров)
+    // --------------------------------------------------------------
+    const productsCatalog = [
+        { id: "1", name: "Аппарат МРТ High-Field (3.0 Тл)", price: 50000000, desc: "Система с высокой пропускной способностью для нейровизуализации.", features: "3.0 Тесла, AI-интерфейс" },
+        { id: "2", name: "Хирургический Робот-Ассистент", price: 95500000, desc: "Минимально инвазивные операции с высочайшей точностью.", features: "7 степеней свободы, 4K видеомодуль" },
+        { id: "3", name: "УЗИ Сканер Портативный", price: 1250000, desc: "Высокомобильный аппарат для экстренной диагностики.", features: "Беспроводная передача данных" },
+        { id: "4", name: "Ангиограф с С-дугой", price: 32800000, desc: "Цифровая система для сосудистых вмешательств.", features: "Низкодозовый режим" },
+        { id: "5", name: "Лазерный Терапевтический Комплекс", price: 4500000, desc: "Малоинвазивная терапия.", features: "Длина волны 1064 нм" },
+        { id: "6", name: "Монитор Пациента HD-X", price: 350000, desc: "15-дюймовый, 12 параметров.", features: "ЭКГ, SpO2, НИАД" },
+        { id: "7", name: "Аппарат ИВЛ Про", price: 2100000, desc: "Автоматизированный ИВЛ экспертного класса.", features: "Режимы VC-CMV, PRVC" },
+        { id: "8", name: "Электрохирургический блок ESB-200", price: 850000, desc: "Моно- и биполярный блок.", features: "Режимы CUT, COAG" },
+        { id: "9", name: "Автоклав Класс B 24л", price: 420000, desc: "Паровой стерилизатор с вакуумной сушкой.", features: "Фракционный вакуум" },
+        { id: "10", name: "ЭКГ-аппарат 12 отв.", price: 180000, desc: "Цифровой 12-канальный с интерпретацией.", features: "Печать на А4" },
+        { id: "11", name: "Инфузионный Насос (4 канала)", price: 250000, desc: "Программируемое введение лекарств.", features: "Сигнализация" },
+        { id: "12", name: "Дефибриллятор с Монитором", price: 750000, desc: "Бифазный, с режимом ЭКГ.", features: "Ручной/автоматический" },
+        { id: "13", name: "Центральный Пульсоксиметр", price: 140000, desc: "Мониторинг сатурации для ОРИТ.", features: "До 16 кроватей" },
+        { id: "14", name: "Эндоскопическая Стойка 4K", price: 18900000, desc: "Система 4K для гастроскопии.", features: "Флуоресцентная визуализация" },
+        { id: "15", name: "Гематологический Анализатор 3-diff", price: 990000, desc: "20 параметров крови.", features: "60 образцов/час" },
+        { id: "16", name: "CO2-инсуффлятор", price: 480000, desc: "Для лапароскопии.", features: "Подогрев газа" },
+        { id: "17", name: "Аппарат Искусственной Почки", price: 3500000, desc: "Гемодиализная система.", features: "Профилирование ультрафильтрации" },
+        { id: "18", name: "Электромиограф", price: 510000, desc: "4 канала, диагностика нервной системы.", features: "Игольчатая стимуляция" },
+        { id: "19", name: "Реанимационный Стол с Весами", price: 220000, desc: "Многофункциональный стол.", features: "Встроенные весы" },
+        { id: "20", name: "Стерилизатор Холодный Плазменный", price: 1100000, desc: "Для термочувствительных инструментов.", features: "Цикл 30 минут" },
+        { id: "21", name: "Система для ЭКО (Лабораторная)", price: 7800000, desc: "Высокоточное оборудование для репродуктологии.", features: "Инкубатор с CO2" }
+    ];
+
+    // Рендер каталога
+    function renderCatalog() {
+        const container = document.getElementById('product-list');
+        container.innerHTML = '';
+        productsCatalog.forEach(prod => {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.dataset.id = prod.id;
+            card.dataset.name = prod.name;
+            card.dataset.price = prod.price;
+            card.innerHTML = `
+                <h3>${prod.name}</h3>
+                <p><strong>Описание:</strong> ${prod.desc}</p>
+                <p><strong>Функции:</strong> ${prod.features}</p>
+                <span class="price">${prod.price.toLocaleString('ru-RU')} RUB</span>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button class="btn-cart add-to-cart-btn" data-id="${prod.id}">🛒 Добавить в корзину</button>
+                    <button class="btn-buy buy-now-btn" data-id="${prod.id}">⚡ Купить сразу</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        // привязываем события динамически
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = btn.dataset.id;
+                const product = productsCatalog.find(p => p.id === id);
+                if (product) addToCart(product);
+            });
+        });
+        document.querySelectorAll('.buy-now-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = btn.dataset.id;
+                const product = productsCatalog.find(p => p.id === id);
+                if (product) openCheckoutModalForSingle(product);
+            });
+        });
+    }
+
+    // --------------------------------------------------------------
+    // 2. КОРЗИНА С поддержкой количества (структура cartItems: {id, name, price, quantity})
+    // --------------------------------------------------------------
+    let cartItems = []; // каждый элемент: { id, name, price, quantity }
+
+    function saveCartToLocal() {
+        localStorage.setItem('mtp_cart', JSON.stringify(cartItems));
+    }
+
+    function loadCartFromLocal() {
+        const saved = localStorage.getItem('mtp_cart');
+        if (saved) {
+            try {
+                cartItems = JSON.parse(saved);
+                if (!Array.isArray(cartItems)) cartItems = [];
+            } catch(e) { cartItems = []; }
+        } else cartItems = [];
+        updateCartUI();
+    }
+
+    function addToCart(product) {
+        const existing = cartItems.find(item => item.id === product.id);
+        if (existing) {
+            existing.quantity += 1;
+            alert(`➕ Увеличено количество "${product.name}" до ${existing.quantity} шт.`);
+        } else {
+            cartItems.push({ id: product.id, name: product.name, price: product.price, quantity: 1 });
+            alert(`✅ Товар "${product.name}" добавлен в корзину.`);
+        }
+        updateCartUI();
+        saveCartToLocal();
+    }
+
+    function updateCartUI() {
+        const cartCountSpan = document.getElementById('cart-count');
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        cartCountSpan.textContent = totalItems;
+        
+        const container = document.getElementById('cart-items-container');
+        const summaryArea = document.getElementById('cart-summary-area');
+        const emptyMsgDiv = document.getElementById('empty-cart-message');
+        
+        if (!cartItems.length) {
+            container.innerHTML = '<div id="empty-cart-message" class="empty-cart-message">🛒 Корзина пуста. Добавьте товары из каталога.</div>';
+            summaryArea.style.display = 'none';
+            return;
+        }
+        
+        container.innerHTML = '';
+        cartItems.forEach((item, idx) => {
+            const totalPriceItem = item.price * item.quantity;
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'cart-item';
+            itemDiv.innerHTML = `
+                <div class="cart-item-info">
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-price">${item.price.toLocaleString('ru-RU')} RUB / шт</div>
+                </div>
+                <div class="cart-item-actions">
+                    <div class="quantity-control">
+                        <button class="qty-minus" data-idx="${idx}">−</button>
+                        <span>${item.quantity}</span>
+                        <button class="qty-plus" data-idx="${idx}">+</button>
+                    </div>
+                    <button class="btn-remove-cart remove-single" data-idx="${idx}">🗑 Удалить</button>
+                    <button class="btn-checkout-single checkout-one" data-idx="${idx}">📦 Оформить</button>
+                </div>
+            `;
+            container.appendChild(itemDiv);
+        });
+        
+        // события для изменения количества
+        document.querySelectorAll('.qty-minus').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                if (cartItems[idx].quantity > 1) {
+                    cartItems[idx].quantity--;
+                } else {
+                    if (confirm('Удалить товар из корзины?')) cartItems.splice(idx, 1);
+                }
+                updateCartUI();
+                saveCartToLocal();
+            });
+        });
+        document.querySelectorAll('.qty-plus').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                cartItems[idx].quantity++;
+                updateCartUI();
+                saveCartToLocal();
+            });
+        });
+        document.querySelectorAll('.remove-single').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                cartItems.splice(idx, 1);
+                updateCartUI();
+                saveCartToLocal();
+            });
+        });
+        document.querySelectorAll('.checkout-one').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                const singleItem = { ...cartItems[idx] };
+                openCheckoutModalForCartItems([singleItem]);
+            });
+        });
+        
+        const total = cartItems.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        document.getElementById('cart-total').textContent = total.toLocaleString('ru-RU', { minimumFractionDigits: 2 });
+        summaryArea.style.display = 'block';
+    }
+    
+    // Очистка всей корзины
+    document.getElementById('clear-cart-btn')?.addEventListener('click', () => {
+        if (cartItems.length && confirm('Вы уверены, что хотите удалить все товары из корзины?')) {
+            cartItems = [];
+            updateCartUI();
+            saveCartToLocal();
+        }
+    });
+    
+    // Оформление всей корзины
+    function openCartCheckout() {
+        if (!cartItems.length) {
+            alert('Корзина пуста. Добавьте товары для оформления.');
+            return;
+        }
+        openCheckoutModalForCartItems([...cartItems]);
+    }
+    
+    // Модальное окно для одного товара (купить сразу)
+    function openCheckoutModalForSingle(product) {
+        const itemArray = [{ id: product.id, name: product.name, price: product.price, quantity: 1 }];
+        openCheckoutModalForCartItems(itemArray);
+    }
+    
+    // Глобальное открытие модалки с возможностью отображения нескольких товаров
+    let currentOrderItems = [];
+    function openCheckoutModalForCartItems(items) {
+        currentOrderItems = items.map(it => ({ ...it }));
+        const totalSum = currentOrderItems.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+        const modalSummary = document.getElementById('modal-order-summary');
+        let itemsHtml = `<strong>Состав заказа:</strong><div class="order-items-list">`;
+        currentOrderItems.forEach(it => {
+            itemsHtml += `<div class="order-item-row">${it.name} x ${it.quantity} шт = ${(it.price * it.quantity).toLocaleString('ru-RU')} RUB</div>`;
+        });
+        itemsHtml += `</div><hr><div style="font-size:1.2rem;"><strong>ИТОГО: ${totalSum.toLocaleString('ru-RU')} RUB</strong></div>`;
+        modalSummary.innerHTML = itemsHtml;
+        document.getElementById('orderForm').reset();
+        document.getElementById('checkoutModal').style.display = "block";
+    }
+    
+    // Закрытие модалки
+    const closeModal = () => {
+        document.getElementById('checkoutModal').style.display = "none";
+        currentOrderItems = [];
+    };
+    document.querySelector('.close-button').onclick = closeModal;
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('checkoutModal')) closeModal();
+    };
+    
+    // Обработка отправки формы заказа
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!currentOrderItems.length) {
+            alert('Нет товаров для оформления');
+            closeModal();
+            return;
+        }
+        const formData = new FormData(this);
+        const orderInfo = {
+            items: currentOrderItems,
+            client: {
+                firstName: formData.get('first_name'),
+                lastName: formData.get('last_name'),
+                patronymic: formData.get('patronymic') || '',
+                city: formData.get('city'),
+                phone: formData.get('phone'),
+                email: formData.get('email')
+            },
+            delivery: formData.get('delivery_type'),
+            paymentMethod: formData.get('payment_method'),
+            paymentTiming: formData.get('payment_timing'),
+            total: currentOrderItems.reduce((s,it) => s + it.price * it.quantity, 0)
+        };
+        alert(`✅ Заказ оформлен успешно!\nКлиент: ${orderInfo.client.firstName} ${orderInfo.client.lastName}\nТоваров: ${orderInfo.items.length} позиций\nСумма: ${orderInfo.total.toLocaleString('ru-RU')} RUB\nСвяжемся с вами по телефону ${orderInfo.client.phone}`);
+        
+        // Если оформление было из корзины (удаляем оформленные товары)
+        const idsToRemove = currentOrderItems.map(it => it.id);
+        cartItems = cartItems.filter(cartItem => !idsToRemove.includes(cartItem.id));
+        updateCartUI();
+        saveCartToLocal();
+        closeModal();
+    });
+    
+    // Кнопка "Оформить из корзины (все товары)"
+    document.getElementById('checkoutFromCartBtn')?.addEventListener('click', openCartCheckout);
+    
+    // Вкладки
+    document.querySelectorAll('nav a').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(targetId).classList.add('active');
+            if (targetId === '#cart') updateCartUI();
+        });
+    });
+    
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCatalog();
+        loadCartFromLocal();
+        document.querySelector('#home').classList.add('active');
+        updateCartUI();
+    });
+</script>
+</body>
+</html>
