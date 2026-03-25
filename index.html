@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МТП | МедТехПродажи — Улучшенная корзина</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>МТП — Медицинская Техника Продажи</h1>
+        <p>Ваш партнер в поставках высокоточного оборудования</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#home">Главная</a></li>
+            <li><a href="#catalog">Каталог (20+ позиций)</a></li>
+            <li><a href="#cart">Корзина (<span id="cart-count">0</span>)</a></li>
+            <li><a href="#about">О компании</a></li>
+            <li><a href="#contacts">Контакты</a></li>
+        </ul>
+    </nav>
+
+    <!-- ГЛАВНАЯ -->
+    <div id="home" class="tab-content active">
+        <h2>Добро пожаловать в МТП!</h2>
+        <p>Мы являемся ведущим поставщиком передового медицинского оборудования, ориентированным на максимальную
+            эффективность и качество обслуживания.</p>
+        <p>Используйте навигацию выше, чтобы перейти в наш обширный <strong>Каталог</strong> или узнать больше о наших
+            <strong>Приоритетах</strong>.</p>
+    </div>
+
+    <!-- КАТАЛОГ (20+ товаров) -->
+    <div id="catalog" class="tab-content">
+        <h2>Каталог Медицинского Оборудования</h2>
+        <p>В нашем каталоге представлено более 20 наименований современного оборудования. Нажмите «Добавить в корзину» —
+            теперь можно управлять количеством в корзине!</p>
+        <div class="product-grid" id="product-list">
+            <!-- Товары генерируются динамически через JS -->
+        </div>
+    </div>
+
+    <!-- КОРЗИНА (улучшенная) -->
+    <div id="cart" class="tab-content">
+        <h2>Ваша Корзина <span style="font-size:0.8rem;">(изменение количества, удаление)</span></h2>
+        <div id="cart-items-container" class="cart-items-container">
+            <!-- динамическая отрисовка -->
+            <div id="empty-cart-message" class="empty-cart-message">🛒 Корзина пуста. Добавьте товары из каталога.
+            </div>
+        </div>
+        <div id="cart-summary-area" style="display: none;">
+            <div class="cart-summary">
+                <div>
+                    <button id="clear-cart-btn" class="btn-clear-cart">🗑 Очистить корзину</button>
+                </div>
+                <div>
+                    <span class="total-price-label">Общая сумма:</span>
+                    <span id="cart-total" class="total-price">0.00</span> RUB
+                </div>
+                <div>
+                    <button id="checkoutFromCartBtn" class="btn-checkout-all">✅ Оформить заказ (все товары)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- О КОМПАНИИ -->
+    <div id="about" class="tab-content">
+        <h2>О Компании «МТП»</h2>
+        <div class="focus-point">
+            <p>Наше основное внимание сосредоточено на обслуживании <strong>частных клиник и обеспечении потребностей
+                    требовательных клиентов (богатых людей)</strong>. Мы ценим <strong>скорость и эффективность</strong>
+                в каждом процессе.</p>
+        </div>
+        <div class="focus-point warning">
+            <p>Что касается государственных поликлиник, то мы вынуждены следовать установленным процедурам закупок.
+                Обращаем внимание, что <strong>государственные поликлиники могут подавать заявки и стоять в очереди
+                    десятилетиями, пока клинику не закроют из-за того, что нет нужного оборудования, ведь они его ждут
+                    10 лет.</strong></p>
+        </div>
+        <h3>Специальные Предложения</h3>
+        <p>Для партнеров, сделавших единовременные закупки на сумму от <strong>4.000.000 RUB</strong>, действует
+            специальная программа лояльности.</p>
+        <hr>
+        <p><strong>Дата Создания Компании:</strong> 2026 год.</p>
+    </div>
+
+    <!-- КОНТАКТЫ -->
+    <div id="contacts" class="tab-content">
+        <h2>Контакты Технической Поддержки и Продаж</h2>
+        <ul>
+            <li><strong>Email:</strong> support@mtp-medtech.ru</li>
+            <li><strong>Телефон 24/7:</strong> +7 (495) 555-01-01</li>
+            <li><strong>Адрес:</strong> г. Москва, Инновационный проспект, д. 42</li>
+        </ul>
+    </div>
+
+    <!-- УНИВЕРСАЛЬНОЕ МОДАЛЬНОЕ ОКНО ОФОРМЛЕНИЯ (для корзины и единичной покупки) -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Оформление Заказа</h2>
+            <div class="order-summary" id="modal-order-summary">
+                <!-- динамическое содержимое (товары, общая сумма) -->
+            </div>
+            <form id="orderForm">
+                <div class="form-group"><label>Имя *</label><input type="text" id="first_name" required></div>
+                <div class="form-group"><label>Фамилия *</label><input type="text" id="last_name" required></div>
+                <div class="form-group"><label>Отчество</label><input type="text" id="patronymic"></div>
+                <div class="form-group"><label>Город *</label><input type="text" id="city" required></div>
+                <div class="form-group"><label>Телефон *</label><input type="tel" id="phone"
+                        placeholder="+7 (XXX) XXX-XX-XX" required></div>
+                <div class="form-group"><label>Email *</label><input type="email" id="email" required></div>
+
+                <h3>Способ получения</h3>
+                <div class="radio-group">
+                    <label><input type="radio" name="delivery_type" value="pickup" required> Самовывоз</label>
+                    <label><input type="radio" name="delivery_type" value="delivery"> Доставка</label>
+                </div>
+                <h3>Способ оплаты</h3>
+                <div class="radio-group">
+                    <label><input type="radio" name="payment_method" value="card" required> Банковская карта</label>
+                    <label><input type="radio" name="payment_method" value="sbp"> СБП</label>
+                </div>
+                <div class="radio-group">
+                    <label><input type="radio" name="payment_timing" value="pay_now" required> Оплатить сейчас</label>
+                    <label><input type="radio" name="payment_timing" value="pay_on_receipt"> Оплата при получении
+                    </label>
+                </div>
+                <button type="submit" class="btn-submit-order">Подтвердить Заказ</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="sprint.js"></script>
+</body>
+
+</html>
