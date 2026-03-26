@@ -1,6 +1,3 @@
-// --------------------------------------------------------------
-// 1. РАСШИРЕННЫЙ КАТАЛОГ (20+ товаров)
-// --------------------------------------------------------------
 const productsCatalog = [
     { id: "1", name: "Аппарат МРТ High-Field (3.0 Тл)", price: 50000000, desc: "Система с высокой пропускной способностью для нейровизуализации.", features: "3.0 Тесла, AI-интерфейс" },
     { id: "2", name: "Хирургический Робот-Ассистент", price: 95500000, desc: "Минимально инвазивные операции с высочайшей точностью.", features: "7 степеней свободы, 4K видеомодуль" },
@@ -152,31 +149,101 @@ function openCartCheckout() {
     openCheckoutModalForCartItems([...cartItems]);
 }
 
-// Модальное окно
+// --------------------------------------------------------------
+// 3. СИСТЕМА ПОДТВЕРЖДЕНИЯ ПО EMAIL
+// --------------------------------------------------------------
 let currentOrderItems = [];
+let pendingOrderData = null;
+let verificationCode = null;
+let codeExpiryTime = null;
 
-function openCheckoutModalForCartItems(items) {
-    currentOrderItems = items.map(it => ({ ...it }));
-    const totalSum = currentOrderItems.reduce((sum, it) => sum + (it.price * it.quantity), 0);
-    const modalSummary = document.getElementById('modal-order-summary');
-    let itemsHtml = `<strong>Состав заказа:</strong><div class="order-items-list">`;
-    currentOrderItems.forEach(it => {
-        itemsHtml += `<div class="order-item-row">${it.name} x ${it.quantity} шт = ${(it.price * it.quantity).toLocaleString('ru-RU')} RUB</div>`;
+// Генерация случайного 6-значного кода
+function generateVerificationCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Имитация отправки кода на email (в реальном проекте здесь был бы запрос к серверу)
+function sendVerificationCode(email, code) {
+    console.log(`📧 Отправка кода ${code} на email: ${email}`);
+    
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            console.log(`🔐 Код подтверждения: ${code}`);
+            alert(`📧 Код подтверждения отправлен на ${email}\n🔐 Для тестирования: ${code}`);
+            resolve(true);
+        }, 500);
     });
-    itemsHtml += `</div><hr><div style="font-size:1.2rem;"><strong>ИТОГО: ${totalSum.toLocaleString('ru-RU')} RUB</strong></div>`;
-    modalSummary.innerHTML = itemsHtml;
-    document.getElementById('orderForm').reset();
-    document.getElementById('checkoutModal').style.display = "block";
 }
 
-function openCheckoutModalForSingle(product) {
-    const itemArray = [{ id: product.id, name: product.name, price: product.price, quantity: 1 }];
-    openCheckoutModalForCartItems(itemArray);
+// Открытие модального окна подтверждения
+function openVerificationModal(email) {
+    document.getElementById('verifyEmailDisplay').textContent = email;
+    document.getElementById('verificationCode').value = '';
+    document.getElementById('verifyCodeModal').style.display = 'block';
 }
 
-function closeModal() {
-    document.getElementById('checkoutModal').style.display = "none";
-    currentOrderItems = [];
+// Закрытие модального окна подтверждения
+function closeVerificationModal() {
+    document.getElementById('verifyCodeModal').style.display = 'none';
+    verificationCode = null;
+    codeExpiryTime = null;
+    pendingOrderData = null;
+}
+
+// Проверка кода подтверждения
+function verifyCode(inputCode) {
+    if (!verificationCode || !codeExpiryTime) {
+        alert('❌ Код не был отправлен или истек срок действия. Запросите новый код.');
+        return false;
+    }
+    
+    if (new Date() > codeExpiryTime) {
+        alert('⏰ Срок действия кода истек. Запросите новый код.');
+        verificationCode = null;
+        codeExpiryTime = null;
+        return false;
+    }
+    
+    if (inputCode === verificationCode) {
+        return true;
+    } else {
+        alert('❌ Неверный код подтверждения. Попробуйте еще раз.');
+        return false;
+    }
+}
+
+// Финальное оформление заказа после подтверждения
+function finalizeOrder() {
+    if (!pendingOrderData) {
+        alert('Ошибка: данные заказа не найдены');
+        return;
+    }
+    
+    const orderInfo = pendingOrderData;
+    
+    alert(`✅ ЗАКАЗ ПОДТВЕРЖДЕН!\n\nКлиент: ${orderInfo.client.firstName} ${orderInfo.client.lastName}\nТоваров: ${orderInfo.items.length} позиций\nСумма: ${orderInfo.total.toLocaleString('ru-RU')} RUB\nСпособ получения: ${orderInfo.delivery === 'pickup' ? 'Самовывоз' : 'Доставка'}\nОплата: ${orderInfo.paymentTiming === 'pay_now' ? 'Оплачена сейчас' : 'При получении'}\n\nСпасибо за покупку! Свяжемся с вами в ближайшее время.`);
+    
+    const idsToRemove = orderInfo.items.map(it => it.id);
+    cartItems = cartItems.filter(cartItem => !idsToRemove.includes(cartItem.id));
+    updateCartUI();
+    saveCartToLocal();
+    
+    closeModal();
+    closeVerificationModal();
+    pendingOrderData = null;
+}
+
+// Отправка кода и открытие модалки подтверждения
+async function initiateVerification(orderData) {
+    const email = orderData.client.email;
+    const code = generateVerificationCode();
+    
+    verificationCode = code;
+    codeExpiryTime = new Date(Date.now() + 5 * 60 * 1000);
+    pendingOrderData = orderData;
+    
+    await sendVerificationCode(email, code);
+    openVerificationModal(email);
 }
 
 // Рендер каталога
@@ -201,7 +268,7 @@ function renderCatalog() {
             `;
         container.appendChild(card);
     });
-    // привязываем события динамически
+    
     document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = btn.dataset.id;
@@ -216,6 +283,31 @@ function renderCatalog() {
             if (product) openCheckoutModalForSingle(product);
         });
     });
+}
+
+// Модальное окно оформления
+function openCheckoutModalForCartItems(items) {
+    currentOrderItems = items.map(it => ({ ...it }));
+    const totalSum = currentOrderItems.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+    const modalSummary = document.getElementById('modal-order-summary');
+    let itemsHtml = `<strong>Состав заказа:</strong><div class="order-items-list">`;
+    currentOrderItems.forEach(it => {
+        itemsHtml += `<div class="order-item-row">${it.name} x ${it.quantity} шт = ${(it.price * it.quantity).toLocaleString('ru-RU')} RUB</div>`;
+    });
+    itemsHtml += `</div><hr><div style="font-size:1.2rem;"><strong>ИТОГО: ${totalSum.toLocaleString('ru-RU')} RUB</strong></div>`;
+    modalSummary.innerHTML = itemsHtml;
+    document.getElementById('orderForm').reset();
+    document.getElementById('checkoutModal').style.display = "block";
+}
+
+function openCheckoutModalForSingle(product) {
+    const itemArray = [{ id: product.id, name: product.name, price: product.price, quantity: 1 }];
+    openCheckoutModalForCartItems(itemArray);
+}
+
+function closeModal() {
+    document.getElementById('checkoutModal').style.display = "none";
+    currentOrderItems = [];
 }
 
 // Инициализация при загрузке страницы
@@ -240,45 +332,104 @@ document.addEventListener('DOMContentLoaded', () => {
     // Кнопка оформления всей корзины
     document.getElementById('checkoutFromCartBtn')?.addEventListener('click', openCartCheckout);
 
-    // Закрытие модалки
-    document.querySelector('.close-button').onclick = closeModal;
-    window.onclick = function (event) {
-        if (event.target == document.getElementById('checkoutModal')) closeModal();
-    };
-
-    // Обработка отправки формы заказа
-    document.getElementById('orderForm').addEventListener('submit', function (e) {
-        e.preventDefault();
+    // Кнопка отправки кода подтверждения
+    document.getElementById('sendCodeBtn')?.addEventListener('click', function() {
+        const firstName = document.getElementById('first_name')?.value.trim();
+        const lastName = document.getElementById('last_name')?.value.trim();
+        const city = document.getElementById('city')?.value.trim();
+        const phone = document.getElementById('phone')?.value.trim();
+        const email = document.getElementById('email')?.value.trim();
+        const deliveryType = document.querySelector('input[name="delivery_type"]:checked')?.value;
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+        const paymentTiming = document.querySelector('input[name="payment_timing"]:checked')?.value;
+        
+        if (!firstName) { alert('Введите имя'); return; }
+        if (!lastName) { alert('Введите фамилию'); return; }
+        if (!city) { alert('Введите город'); return; }
+        if (!phone) { alert('Введите телефон'); return; }
+        if (!email) { alert('Введите email'); return; }
+        if (!deliveryType) { alert('Выберите способ получения'); return; }
+        if (!paymentMethod) { alert('Выберите способ оплаты'); return; }
+        if (!paymentTiming) { alert('Выберите вариант оплаты'); return; }
+        
         if (!currentOrderItems.length) {
             alert('Нет товаров для оформления');
-            closeModal();
             return;
         }
-        const formData = new FormData(this);
-        const orderInfo = {
+        
+        const orderData = {
             items: currentOrderItems,
             client: {
-                firstName: formData.get('first_name'),
-                lastName: formData.get('last_name'),
-                patronymic: formData.get('patronymic') || '',
-                city: formData.get('city'),
-                phone: formData.get('phone'),
-                email: formData.get('email')
+                firstName: firstName,
+                lastName: lastName,
+                patronymic: document.getElementById('patronymic')?.value.trim() || '',
+                city: city,
+                phone: phone,
+                email: email
             },
-            delivery: formData.get('delivery_type'),
-            paymentMethod: formData.get('payment_method'),
-            paymentTiming: formData.get('payment_timing'),
+            delivery: deliveryType,
+            paymentMethod: paymentMethod,
+            paymentTiming: paymentTiming,
             total: currentOrderItems.reduce((s, it) => s + it.price * it.quantity, 0)
         };
-        alert(`✅ Заказ оформлен успешно!\nКлиент: ${orderInfo.client.firstName} ${orderInfo.client.lastName}\nТоваров: ${orderInfo.items.length} позиций\nСумма: ${orderInfo.total.toLocaleString('ru-RU')} RUB\nСвяжемся с вами по телефону ${orderInfo.client.phone}`);
-
-        // Если оформление было из корзины (удаляем оформленные товары)
-        const idsToRemove = currentOrderItems.map(it => it.id);
-        cartItems = cartItems.filter(cartItem => !idsToRemove.includes(cartItem.id));
-        updateCartUI();
-        saveCartToLocal();
-        closeModal();
+        
+        initiateVerification(orderData);
     });
+
+    // Кнопка подтверждения кода
+    document.getElementById('verifyCodeBtn')?.addEventListener('click', function() {
+        const inputCode = document.getElementById('verificationCode')?.value.trim();
+        if (!inputCode) {
+            alert('Введите код подтверждения');
+            return;
+        }
+        
+        if (verifyCode(inputCode)) {
+            finalizeOrder();
+        }
+    });
+    
+    // Кнопка повторной отправки кода
+    document.getElementById('resendCodeBtn')?.addEventListener('click', async function() {
+        if (pendingOrderData) {
+            const newCode = generateVerificationCode();
+            verificationCode = newCode;
+            codeExpiryTime = new Date(Date.now() + 5 * 60 * 1000);
+            await sendVerificationCode(pendingOrderData.client.email, newCode);
+            alert('🔐 Новый код отправлен на ваш email');
+        } else {
+            alert('Ошибка: данные заказа не найдены');
+        }
+    });
+
+    // Быстрая форма связи в контактах
+    document.getElementById('quickSubmitBtn')?.addEventListener('click', function() {
+        const name = document.getElementById('quickName')?.value.trim();
+        const phone = document.getElementById('quickPhone')?.value.trim();
+        const email = document.getElementById('quickEmail')?.value.trim();
+        
+        if (!name && !phone && !email) {
+            alert('Заполните хотя бы одно поле для связи');
+            return;
+        }
+        
+        alert(`✅ Спасибо, ${name || 'уважаемый клиент'}! Наш менеджер свяжется с вами в ближайшее время.\n\nКонтактные данные:\nТелефон: ${phone || 'не указан'}\nEmail: ${email || 'не указан'}`);
+        
+        document.getElementById('quickName').value = '';
+        document.getElementById('quickPhone').value = '';
+        document.getElementById('quickEmail').value = '';
+    });
+
+    // Закрытие модалки оформления
+    document.querySelector('#checkoutModal .close-button').onclick = closeModal;
+    
+    // Закрытие модалки подтверждения
+    document.querySelector('#verifyCodeModal .verify-close').onclick = closeVerificationModal;
+    
+    window.onclick = function (event) {
+        if (event.target == document.getElementById('checkoutModal')) closeModal();
+        if (event.target == document.getElementById('verifyCodeModal')) closeVerificationModal();
+    };
 
     // Активируем главную вкладку
     document.querySelector('#home').classList.add('active');
